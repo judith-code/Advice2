@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminder System</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .form-container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .reminders-list {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .reminders-title {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+
+        .no-reminders {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            margin: 30px 0;
+        }
+
+        .reminder-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .reminder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .reminder-title {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .reminder-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .delete-btn, .send-now-btn {
+            padding: 5px 10px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            font-weight: normal;
+            width: auto;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .send-now-btn {
+            background-color: #2ecc71;
+        }
+
+        .send-now-btn:hover {
+            background-color: #27ae60;
+        }
+
+        .reminder-details {
+            margin-top: 10px;
+        }
+
+        .reminder-details p {
+            margin-bottom: 5px;
+        }
+
+        .reminder-description {
+            color: #34495e;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+        }
+
+        .reminder-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Hidden Formspree form */
+        #formspreeForm {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reminder System</h1>
+        <div id="message" class="message"></div>
+
+        <div class="app-grid">
+            <div class="form-container">
+                <h2 class="form-title">Create New Reminder</h2>
+                <form id="reminderForm">
+                    <div class="form-group">
+                        <label for="title">Title:</label>
+                        <input type="text" id="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea id="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="dueDate">Due Date:</label>
+                        <input type="datetime-local" id="dueDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email for Notification:</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="notifyBefore">Notify Before:</label>
+                        <select id="notifyBefore">
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="1440">1 day</option>
+                        </select>
+                    </div>
+                    <button type="submit">Create Reminder</button>
+                </form>
+            </div>
+
+            <div class="reminders-list">
+                <h2 class="reminders-title">Your Reminders</h2>
+                <div id="remindersList">
+                    <p class="no-reminders">No reminders found</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden Formspree form for sending emails -->
+    <form id="formspreeForm" action="https://formspree.io/f/xgvaynao" method="POST">
+        <input type="email" name="email" id="formspreeEmail">
+        <input type="text" name="subject" id="formspreeSubject">
+        <textarea name="message" id="formspreeMessage"></textarea>
+    </form>
+
+    <script>
+        // DOM elements
+        const reminderForm = document.getElementById('reminderForm');
+        const remindersList = document.getElementById('remindersList');
+        const messageElement = document.getElementById('message');
+        const formspreeForm = document.getElementById('formspreeForm');
+        const formspreeEmail = document.getElementById('formspreeEmail');
+        const formspreeSubject = document.getElementById('formspreeSubject');
+        const formspreeMessage = document.getElementById('formspreeMessage');
+
+        // Storage key
+        const STORAGE_KEY = 'reminders';
+
+        // Load reminders from localStorage
+        function loadReminders() {
+            const storedReminders = localStorage.getItem(STORAGE_KEY);
+            return storedReminders ? JSON.parse(storedReminders) : [];
+        }
+
+        // Save reminders to localStorage
+        function saveReminders(reminders) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders));
+        }
+
+        // Display reminders in the UI
+        function displayReminders() {
+            const reminders = loadReminders();
+            
+            if (reminders.length === 0) {
+                remindersList.innerHTML = '<p class="no-reminders">No reminders found</p>';
+                return;
+            }
+            
+            // Sort reminders by due date (earliest first)
+            reminders.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            
+            remindersList.innerHTML = '';
+            
+            reminders.forEach((reminder, index) => {
+                const dueDate = new Date(reminder.dueDate);
+                const now = new Date();
+                
+                // Determine if reminder is overdue
+                const isOverdue = dueDate < now && !reminder.notified;
+                
+                const reminderElement = document.createElement('div');
+                reminderElement.className = 'reminder-item';
+                
+                if (isOverdue) {
+                    reminderElement.style.borderLeft = '4px solid #e74c3c';
+                } else if (reminder.notified) {
+                    reminderElement.style.borderLeft = '4px solid #95a5a6';
+                }
+                
+                reminderElement.innerHTML = `
+                    <div class="reminder-header">
+                        <div class="reminder-title">${reminder.title}</div>
+                        <div class="reminder-actions">
+                            <button class="send-now-btn">Send Now</button>
+                            <button class="delete-btn">Delete</button>
+                        </div>
+                    </div>
+                    <div class="reminder-details">
+                        <div class="reminder-description">${reminder.description}</div>
+                        <div class="reminder-meta">
+                            <span>${isOverdue ? '⚠️ OVERDUE: ' : ''}${dueDate.toLocaleString()}</span>
+                            <span>Notification: ${reminder.email}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners
+                const deleteBtn = reminderElement.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', () => {
+                    deleteReminder(index);
+                });
+                
+                const sendNowBtn = reminderElement.querySelector('.send-now-btn');
+                sendNowBtn.addEventListener('click', () => {
+                    sendReminderEmail(reminder, index);
+                });
+                
+                remindersList.appendChild(reminderElement);
+            });
+        }
+
+        // Create a new reminder
+        function createReminder(event) {
+            event.preventDefault();
+            
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const dueDate = document.getElementById('dueDate').value;
+            const email = document.getElementById('email').value;
+            const notifyBefore = document.getElementById('notifyBefore').value;
+            
+            if (!title || !description || !dueDate || !email) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            const reminder = {
+                id: Date.now().toString(), // unique ID
+                title,
+                description,
+                dueDate,
+                email,
+                notifyBefore,
+                notified: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            const reminders = loadReminders();
+            reminders.push(reminder);
+            saveReminders(reminders);
+            
+            // Reset form
+            reminderForm.reset();
+            
+            // Show success message
+            showMessage('Reminder created successfully!', 'success');
+            
+            // Refresh the reminders list
+            displayReminders();
+            
+            // Schedule the reminder check
+            scheduleReminderCheck();
+        }
+
+        // Delete a reminder
+        function deleteReminder(index) {
+            const reminders = loadReminders();
+            reminders.splice(index, 1);
+            saveReminders(reminders);
+            
+            showMessage('Reminder deleted', 'success');
+            displayReminders();
+        }
+
+        // Check for upcoming reminders
+        function checkReminders() {
+            const reminders = loadReminders();
+            const now = new Date();
+            
+            let updated = false;
+            
+            reminders.forEach((reminder, index) => {
+                if (reminder.notified) {
+                    return; // Skip already notified reminders
+                }
+                
+                const dueDate = new Date(reminder.dueDate);
+                const notifyBefore = parseInt(reminder.notifyBefore);
+                
+                // Calculate notification time (dueDate - notifyBefore minutes)
+                const notifyTime = new Date(dueDate.getTime() - notifyBefore * 60000);
+                
+                // If it's time to notify
+                if (now >= notifyTime && now <= dueDate) {
+                    sendReminderEmail(reminder, index);
+                    updated = true;
+                }
+            });
+            
+            if (updated) {
+                displayReminders();
+            }
+            
+            // Schedule next check
+            scheduleReminderCheck();
+        }
+
+        // Send email reminder using Formspree
+        function sendReminderEmail(reminder, index) {
+            // Prepare email content for Formspree
+            formspreeEmail.value = reminder.email;
+            formspreeSubject.value = `Reminder: ${reminder.title}`;
+            formspreeMessage.value = `
+Hello,
+
+This is a reminder for: ${reminder.title}
+
+Description:
+${reminder.description}
+
+Due Date: ${new Date(reminder.dueDate).toLocaleString()}
+
+This is an automated reminder sent from your Reminder System.
+`;
+
+            // Use the Fetch API to submit the form data to Formspree
+            const formData = new FormData(formspreeForm);
+            
+            fetch("https://formspree.io/f/xgvaynao", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Mark reminder as notified
+                    const reminders = loadReminders();
+                    if (reminders[index]) {
+                        reminders[index].notified = true;
+                        saveReminders(reminders);
+                        displayReminders();
+                        showMessage(`Reminder notification sent to ${reminder.email}`, 'success');
+                    }
+                    return response.json();
+                }
+                throw new Error('Network response was not ok');
+            })
+            .catch(error => {
+                console.error('Error sending email:', error);
+                showMessage('Failed to send email notification', 'error');
+            });
+        }
+
+        // Schedule the next reminder check
+        function scheduleReminderCheck() {
+            // Check every minute
+            setTimeout(checkReminders, 60000);
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            messageElement.textContent = text;
+            messageElement.className = `message ${type}`;
+            messageElement.style.display = 'block';
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // Event listeners
+        reminderForm.addEventListener('submit', createReminder);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set minimum date/time for the reminder to current time
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('dueDate').min = minDateTime;
+            
+            // Display reminders
+            displayReminders();
+            
+            // Start checking for reminders
+            scheduleReminderCheck();
+        });
+    </script>
+</body>
+</html>
